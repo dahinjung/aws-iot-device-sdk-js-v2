@@ -53,6 +53,18 @@ yargs.command('*', false, (yargs: any) => {
             type: 'string',
             default: 'Hello world!'
         })
+        .option('temperature', {
+            alias: 'tmp',
+            description: 'STRING: Temperature.',
+            type: 'int',
+            default: '65'
+        })
+        .option('humidity', {
+            alias: 'h',
+            description: 'STRING: Humidity.',
+            type: 'double',
+            default: '.6'
+        })
         .option('region', {
             description: 'STRING: AWS Region.',
             type: 'string',
@@ -160,17 +172,18 @@ async function execute_session(connection: mqtt.MqttClientConnection, argv: Args
             }
 
             if (argv.mode == 'both' || argv.mode == 'publish') {
-                for (let op_idx = 0; op_idx < argv.max_pub_ops; ++op_idx) {
-                    const publish = async () => {
-                        const msg = {
-                            message: argv.message,
-                            sequence: op_idx + 1,
-                        };
-                        const json = JSON.stringify(msg);
-                        connection.publish(argv.topic, json, mqtt.QoS.AtMostOnce);
-                    }
-                    setTimeout(publish, op_idx * 1000);
-                }
+                  const publish = async () => {
+                      const msg = {
+                          message: argv.message,
+                          device_name: argv.thing_name,
+                          readings: argv.temperature,
+                          timestamp: new Date().toLocaleString(),
+                      };
+                      const json = JSON.stringify(msg);
+                      connection.publish(argv.topic, json, mqtt.QoS.AtMostOnce);
+                  }
+                  var intervalID = window.setInterval(publish, 10000);
+                  //setTimeout(publish, op_idx * 1000);
             }
         }
         catch (error) {
