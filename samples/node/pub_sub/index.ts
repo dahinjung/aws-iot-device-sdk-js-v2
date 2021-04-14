@@ -132,16 +132,19 @@ async function execute_session(connection: mqtt.MqttClientConnection, argv: Args
 
             await connection.subscribe(argv.topic, mqtt.QoS.AtLeastOnce, on_publish);
 
-            const publish = async () => {
-                const msg = {
-                    device_name: argv.message,
-                    readings: argv.temperature,
-                    timestamp: new Date().toLocaleString(),
-                };
-                const json = JSON.stringify(msg);
-                connection.publish(argv.topic, json, mqtt.QoS.AtLeastOnce);
+            for (let op_idx = 0; op_idx < argv.count; ++op_idx) {
+                const publish = async () => {
+                    const msg = {
+                      message: argv.message,
+                      device_name: argv.thing_name,
+                      readings: argv.temperature,
+                      timestamp: new Date().toLocaleString(),
+                    };
+                    const json = JSON.stringify(msg);
+                    connection.publish(argv.topic, json, mqtt.QoS.AtLeastOnce);
+                }
+                var intervalID = window.setInterval(publish, 10000);
             }
-            var intervalID = window.setInterval(publish, 10000);
         }
         catch (error) {
             reject(error);
