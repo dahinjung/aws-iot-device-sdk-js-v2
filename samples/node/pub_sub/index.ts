@@ -92,6 +92,18 @@ yargs.command('*', false, (yargs: any) => {
             type: 'string',
             default: 'Hello world!'
         })
+        .option('temperature', {
+            alias: 'tmp',
+            description: 'STRING: Temperature.',
+            type: 'int',
+            default: '65'
+        })
+        .option('humidity', {
+            alias: 'h',
+            description: 'STRING: Humidity.',
+            type: 'double',
+            default: '.6'
+        })
         .option('verbosity', {
             alias: 'v',
             description: 'BOOLEAN: Verbose output',
@@ -120,17 +132,16 @@ async function execute_session(connection: mqtt.MqttClientConnection, argv: Args
 
             await connection.subscribe(argv.topic, mqtt.QoS.AtLeastOnce, on_publish);
 
-            for (let op_idx = 0; op_idx < argv.count; ++op_idx) {
-                const publish = async () => {
-                    const msg = {
-                        message: argv.message,
-                        sequence: op_idx + 1,
-                    };
-                    const json = JSON.stringify(msg);
-                    connection.publish(argv.topic, json, mqtt.QoS.AtLeastOnce);
-                }
-                setTimeout(publish, op_idx * 1000);
+            const publish = async () => {
+                const msg = {
+                    device_name: argv.message,
+                    readings: argv.temperature,
+                    timestamp: new Date().toLocaleString(),
+                };
+                const json = JSON.stringify(msg);
+                connection.publish(argv.topic, json, mqtt.QoS.AtLeastOnce);
             }
+            var intervalID = window.setInterval(publish, 10000);
         }
         catch (error) {
             reject(error);
